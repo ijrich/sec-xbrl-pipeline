@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    container_name: sec_pipeline_app
+    volumes:
+      - .:/app
+    command: sleep infinity
