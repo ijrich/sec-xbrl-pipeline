@@ -534,7 +534,7 @@ class XBRLParserService:
             return "Balance Sheet"
         elif "comprehensiveincome" in text_no_spaces:
             return "Statement of Comprehensive Income"
-        elif "incomestatement" in text_no_spaces or "statementofincome" in text_no_spaces or "operations" in text or "statementofoperations" in text_no_spaces:
+        elif "incomestatement" in text_no_spaces or "statementsofincome" in text_no_spaces or "statementofincome" in text_no_spaces or "operations" in text or "statementofoperations" in text_no_spaces:
             return "Income Statement"
         elif "cashflow" in text_no_spaces or "statementofcashflows" in text_no_spaces:
             return "Cash Flow Statement"
