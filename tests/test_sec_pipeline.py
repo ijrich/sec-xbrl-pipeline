@@ -68,6 +68,23 @@ class TestSECFetch:
         logger.info(f"Latest 10-Q: {latest_10q.accession_number} filed {latest_10q.filing_date}")
         logger.info(f"  XBRL URL: {latest_10q.xbrl_instance_url}")
 
+    async def test_fetch_filings_by_cik(self, sec_client):
+        """Fetch filings by CIK (skipping ticker lookup) and validate response."""
+        from sec_pipeline import XBRLFilingsResponse
+
+        response = await sec_client.get_company_filings_by_cik("0001783879")
+
+        assert isinstance(response, XBRLFilingsResponse)
+        assert response.cik == "0001783879"
+        assert response.company_name is not None
+        assert response.total_filings > 0
+        assert response.ticker is not None  # HOOD should resolve
+
+        logger.info(
+            f"Fetched {response.total_filings} XBRL filings for "
+            f"{response.company_name} ({response.ticker}) via CIK"
+        )
+
     async def test_filing_schema_fields(self, sec_client):
         """Validate all expected fields on XBRLFiling are populated."""
         response = await sec_client.get_company_filings("MSFT")

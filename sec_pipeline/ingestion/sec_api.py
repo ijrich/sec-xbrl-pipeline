@@ -236,6 +236,75 @@ class SECAPIClient:
             exchange=exchange,
         )
 
+    async def get_company_filings_by_cik(self, cik: str) -> XBRLFilingsResponse:
+        """
+        Get all XBRL filings for a given CIK, including historical filings.
+
+        Skips ticker lookup — goes directly to the submissions endpoint.
+
+        Args:
+            cik: SEC Central Index Key (zero-padded, e.g., '0001783879')
+
+        Returns:
+            XBRLFilingsResponse with company info and filings
+
+        Raises:
+            httpx.HTTPError: If API request fails
+        """
+        url = f"{self.BASE_URL}/submissions/CIK{cik}.json"
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self.headers)
+            response.raise_for_status()
+            data = response.json()
+
+            company_name = data["name"]
+            tickers = data.get("tickers", [])
+            ticker = tickers[0] if tickers else None
+
+            sic_code = data.get("sic")
+            sic_description = data.get("sicDescription")
+            entity_type = data.get("entityType")
+            state_of_incorporation = data.get("stateOfIncorporation")
+            fiscal_year_end = data.get("fiscalYearEnd")
+
+            exchanges = data.get("exchanges", [])
+            exchange = exchanges[0] if exchanges else None
+
+            # Extract XBRL filings from the "recent" page
+            recent_filings = data.get("filings", {}).get("recent", {})
+            filings = self._extract_xbrl_filings(recent_filings, cik)
+
+            # Paginate through additional filing pages for historical filings
+            additional_files = data.get("filings", {}).get("files", [])
+            for file_ref in additional_files:
+                file_name = file_ref.get("name")
+                if not file_name:
+                    continue
+                page_url = f"{self.BASE_URL}/submissions/{file_name}"
+                try:
+                    page_response = await client.get(page_url, headers=self.headers)
+                    page_response.raise_for_status()
+                    page_data = page_response.json()
+                    filings.extend(self._extract_xbrl_filings(page_data, cik))
+                except Exception as e:
+                    logger.warning(f"Failed to fetch filing page {file_name}: {e}")
+                    continue
+
+        return XBRLFilingsResponse(
+            ticker=ticker,
+            cik=cik,
+            company_name=company_name,
+            filings=filings,
+            total_filings=len(filings),
+            sic_code=sic_code,
+            sic_description=sic_description,
+            entity_type=entity_type,
+            state_of_incorporation=state_of_incorporation,
+            fiscal_year_end=fiscal_year_end,
+            exchange=exchange,
+        )
+
 
 _sec_client: SECAPIClient | None = None
 

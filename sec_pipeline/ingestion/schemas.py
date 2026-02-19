@@ -40,7 +40,7 @@ class XBRLFiling(BaseModel):
 class XBRLFilingsResponse(BaseModel):
     """Schema for the response containing XBRL filings for a company."""
 
-    ticker: str = Field(..., description="Stock ticker symbol")
+    ticker: Optional[str] = Field(None, description="Stock ticker symbol")
     cik: str = Field(..., description="SEC Central Index Key (CIK)")
     company_name: str = Field(..., description="Official company name")
     filings: list[XBRLFiling] = Field(..., description="List of XBRL filings")
