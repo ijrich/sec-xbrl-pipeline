@@ -372,10 +372,8 @@ def main():
     print(f"  New (unmapped): {len(new_descriptions)}")
     if errors:
         print(f"  Errors: {len(errors)}")
-        for e in errors[:10]:
+        for e in sorted(errors):
             print(e)
-        if len(errors) > 10:
-            print(f"  ... and {len(errors) - 10} more")
 
     if not new_descriptions:
         print("\n✅ All descriptions already mapped. Nothing to do.")
