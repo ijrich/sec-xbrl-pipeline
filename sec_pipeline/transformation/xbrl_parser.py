@@ -518,13 +518,14 @@ class XBRLParserService:
         """
         Extract statement roles from the presentation linkbase.
 
-        Roles identify different financial statements and disclosures
-        (e.g., Balance Sheet, Income Statement, Cash Flow Statement).
+        Only includes roles whose definition category is "Statement"
+        (per the SEC EDGAR ``NNNNNN - Category - Description`` convention).
+        Roles with non-conforming or missing definitions are dropped.
 
         Returns:
             List of statement role dictionaries
         """
-        from sec_pipeline.config import load_statement_type_mappings
+        from sec_pipeline.config import load_statement_type_mappings, parse_role_definition
         mappings = load_statement_type_mappings()
 
         # Get presentation relationship set to find which roles have content
@@ -548,25 +549,33 @@ class XBRLParserService:
                 if role_types:
                     role_type = role_types[0]
                     definition = role_type.definition if hasattr(role_type, 'definition') else None
-                    try:
-                        label = role_type.genLabel(lang="en-US", strip=True)
-                    except Exception:
-                        label = None
                 else:
                     definition = None
-                    label = None
+
+                # Drop roles with missing or non-conforming definitions
+                if not definition:
+                    continue
+                parsed = parse_role_definition(definition)
+                if parsed is None:
+                    continue
+                category, description = parsed
+
+                # Only include primary financial statements
+                if category.lower() != "statement":
+                    continue
 
                 # Skip parenthetical disclosures (they're supplementary)
                 if "parenthetical" in role_uri.lower():
                     continue
 
-                # Look up statement type from seed mappings
-                statement_type = mappings.get(role_uri, "Unclassified")
+                # Look up statement type from seed mappings by description
+                statement_type = mappings.get(description, "Unclassified")
 
                 statement_data = {
                     "role_uri": role_uri,
+                    "definition": definition,
                     "statement_type": statement_type,
-                    "statement_name": label or definition or role_uri,
+                    "statement_name": description,
                     "display_order": display_order
                 }
 
