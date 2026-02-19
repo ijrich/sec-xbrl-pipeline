@@ -246,18 +246,26 @@ class TestXBRLParse:
         logger.info(f"Total concepts: {len(concepts)}")
 
     async def test_statement_roles_identify_financial_statements(self, parsed_10q):
-        """Statement roles should identify the four main financial statements."""
+        """Statement roles should have correct structure and recognizable statement names."""
         roles = parsed_10q["xbrl_data"]["statement_roles"]
 
         assert len(roles) > 0, "No statement roles found"
 
-        statement_types = {r["statement_type"] for r in roles}
-        logger.info(f"Statement types: {statement_types}")
+        # Validate required fields on each role
+        required_fields = {"role_uri", "definition", "statement_name", "display_order"}
+        for role in roles:
+            for field in required_fields:
+                assert field in role, f"Role missing required field: {field}"
 
-        # A 10-Q should have at least these
-        expected = {"Balance Sheet", "Income Statement", "Cash Flow Statement"}
-        found = statement_types & expected
-        assert len(found) >= 2, f"Expected at least 2 of {expected}, found: {found}"
+        # statement_name values should contain recognizable financial statement descriptions
+        statement_names = {r["statement_name"] for r in roles}
+        logger.info(f"Statement names: {statement_names}")
+
+        # A 10-Q should mention at least a couple of these keywords in its statement names
+        keywords = ["balance sheet", "income", "cash flow", "operations", "equity", "financial position"]
+        names_lower = " ".join(statement_names).lower()
+        matched = [kw for kw in keywords if kw in names_lower]
+        assert len(matched) >= 2, f"Expected at least 2 financial statement keywords in names, matched: {matched}"
 
     async def test_presentation_relationships_form_hierarchy(self, parsed_10q):
         """Presentation relationships define the line-item hierarchy."""
