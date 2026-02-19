@@ -514,35 +514,6 @@ class XBRLParserService:
         logger.info(f"Extracted {len(labels)} labels from label linkbase")
         return labels
 
-    def _classify_statement_type(self, role_uri: str, role_definition: str = None) -> str:
-        """
-        Classify a role URI into a statement type based on keywords.
-
-        Args:
-            role_uri: The role URI from the presentation linkbase
-            role_definition: Optional role definition text
-
-        Returns:
-            Statement type classification (e.g., "Balance Sheet", "Income Statement")
-        """
-        text = (role_uri + " " + (role_definition or "")).lower()
-
-        # Remove spaces for better pattern matching
-        text_no_spaces = text.replace(" ", "")
-
-        if "balancesheet" in text_no_spaces or "financialposition" in text_no_spaces or "statementoffinancialposition" in text_no_spaces:
-            return "Balance Sheet"
-        elif "comprehensiveincome" in text_no_spaces:
-            return "Statement of Comprehensive Income"
-        elif "incomestatement" in text_no_spaces or "statementofincome" in text_no_spaces or "operations" in text or "statementofoperations" in text_no_spaces:
-            return "Income Statement"
-        elif "cashflow" in text_no_spaces or "statementofcashflows" in text_no_spaces:
-            return "Cash Flow Statement"
-        elif "stockholdersequity" in text_no_spaces or "shareholdersequity" in text_no_spaces or "shareowner" in text:
-            return "Statement of Stockholders' Equity"
-        else:
-            return "Other"
-
     def _extract_statement_roles(self, model_xbrl: ModelXbrl) -> List[Dict[str, Any]]:
         """
         Extract statement roles from the presentation linkbase.
@@ -553,6 +524,9 @@ class XBRLParserService:
         Returns:
             List of statement role dictionaries
         """
+        from sec_pipeline.config import load_statement_type_mappings
+        mappings = load_statement_type_mappings()
+
         # Get presentation relationship set to find which roles have content
         pres_rel_set = model_xbrl.relationshipSet(XbrlConst.parentChild)
 
@@ -586,8 +560,8 @@ class XBRLParserService:
                 if "parenthetical" in role_uri.lower():
                     continue
 
-                # Classify the statement type
-                statement_type = self._classify_statement_type(role_uri, definition)
+                # Look up statement type from seed mappings
+                statement_type = mappings.get(role_uri, "Unclassified")
 
                 statement_data = {
                     "role_uri": role_uri,
