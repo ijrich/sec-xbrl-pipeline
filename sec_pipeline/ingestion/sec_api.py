@@ -93,9 +93,76 @@ class SECAPIClient:
                 logger.error(f"Unexpected error looking up ticker '{ticker}': {type(e).__name__}: {str(e)}")
                 return None
 
+    def _extract_xbrl_filings(self, filing_arrays: dict, cik: str) -> list[XBRLFiling]:
+        """
+        Extract XBRL filings from SEC EDGAR filing arrays.
+
+        Args:
+            filing_arrays: Dict with parallel arrays (form, filingDate, accessionNumber, etc.)
+            cik: Company CIK (zero-padded)
+
+        Returns:
+            List of XBRLFiling objects for filings that have XBRL data
+        """
+        filings = []
+
+        forms = filing_arrays.get("form", [])
+        filing_dates = filing_arrays.get("filingDate", [])
+        accession_numbers = filing_arrays.get("accessionNumber", [])
+        report_dates = filing_arrays.get("reportDate", [])
+        file_numbers = filing_arrays.get("fileNumber", [])
+        film_numbers = filing_arrays.get("filmNumber", [])
+        primary_documents = filing_arrays.get("primaryDocument", [])
+        primary_doc_descriptions = filing_arrays.get("primaryDocDescription", [])
+        is_xbrl_list = filing_arrays.get("isXBRL", [])
+        is_inline_xbrl_list = filing_arrays.get("isInlineXBRL", [])
+
+        for i in range(len(forms)):
+            is_xbrl = is_xbrl_list[i] if i < len(is_xbrl_list) else False
+
+            if is_xbrl:
+                is_inline = is_inline_xbrl_list[i] if i < len(is_inline_xbrl_list) else False
+                primary_doc = primary_documents[i] if i < len(primary_documents) else None
+                accession_no = accession_numbers[i]
+                accession_no_dashes = accession_no.replace("-", "")
+
+                xbrl_instance_url = None
+                primary_doc_url = None
+
+                if primary_doc:
+                    base_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_no_dashes}"
+                    primary_doc_url = f"{base_url}/{primary_doc}"
+
+                    if is_inline and primary_doc.endswith(".htm"):
+                        xbrl_filename = primary_doc.replace(".htm", "_htm.xml")
+                        xbrl_instance_url = f"{base_url}/{xbrl_filename}"
+                    elif primary_doc.endswith(".xml"):
+                        xbrl_instance_url = primary_doc_url
+
+                filing = XBRLFiling(
+                    accession_number=accession_no,
+                    filing_date=filing_dates[i],
+                    report_date=report_dates[i] if i < len(report_dates) else None,
+                    form_type=forms[i],
+                    file_number=file_numbers[i] if i < len(file_numbers) else None,
+                    film_number=film_numbers[i] if i < len(film_numbers) else None,
+                    primary_document=primary_doc,
+                    primary_doc_description=primary_doc_descriptions[i] if i < len(primary_doc_descriptions) else None,
+                    is_xbrl=is_xbrl,
+                    is_inline_xbrl=is_inline,
+                    xbrl_instance_url=xbrl_instance_url,
+                    primary_document_url=primary_doc_url,
+                )
+                filings.append(filing)
+
+        return filings
+
     async def get_company_filings(self, ticker: str) -> XBRLFilingsResponse:
         """
-        Get all XBRL filings for a given ticker.
+        Get all XBRL filings for a given ticker, including historical filings.
+
+        Fetches the initial submissions page and paginates through all additional
+        filing pages referenced in data["filings"]["files"].
 
         Args:
             ticker: Stock ticker symbol (e.g., 'AAPL')
@@ -124,76 +191,36 @@ class SECAPIClient:
             response.raise_for_status()
             data = response.json()
 
-        # Extract company metadata
-        sic_code = data.get("sic")
-        sic_description = data.get("sicDescription")
-        entity_type = data.get("entityType")
-        state_of_incorporation = data.get("stateOfIncorporation")
-        fiscal_year_end = data.get("fiscalYearEnd")
+            # Extract company metadata
+            sic_code = data.get("sic")
+            sic_description = data.get("sicDescription")
+            entity_type = data.get("entityType")
+            state_of_incorporation = data.get("stateOfIncorporation")
+            fiscal_year_end = data.get("fiscalYearEnd")
 
-        # Tickers/exchanges are arrays; take first if available
-        tickers = data.get("tickers", [])
-        exchanges = data.get("exchanges", [])
-        exchange = exchanges[0] if exchanges else None
+            # Tickers/exchanges are arrays; take first if available
+            exchanges = data.get("exchanges", [])
+            exchange = exchanges[0] if exchanges else None
 
-        # Extract only XBRL filings
-        recent_filings = data.get("filings", {}).get("recent", {})
+            # Extract XBRL filings from the "recent" page
+            recent_filings = data.get("filings", {}).get("recent", {})
+            filings = self._extract_xbrl_filings(recent_filings, cik)
 
-        filings = []
-
-        forms = recent_filings.get("form", [])
-        filing_dates = recent_filings.get("filingDate", [])
-        accession_numbers = recent_filings.get("accessionNumber", [])
-        report_dates = recent_filings.get("reportDate", [])
-        file_numbers = recent_filings.get("fileNumber", [])
-        film_numbers = recent_filings.get("filmNumber", [])
-        primary_documents = recent_filings.get("primaryDocument", [])
-        primary_doc_descriptions = recent_filings.get("primaryDocDescription", [])
-        is_xbrl_list = recent_filings.get("isXBRL", [])
-        is_inline_xbrl_list = recent_filings.get("isInlineXBRL", [])
-
-        for i in range(len(forms)):
-            # Only include filings that have XBRL data
-            is_xbrl = is_xbrl_list[i] if i < len(is_xbrl_list) else False
-
-            if is_xbrl:
-                is_inline = is_inline_xbrl_list[i] if i < len(is_inline_xbrl_list) else False
-                primary_doc = primary_documents[i] if i < len(primary_documents) else None
-                accession_no = accession_numbers[i]
-                accession_no_dashes = accession_no.replace("-", "")
-
-                # Construct URLs
-                xbrl_instance_url = None
-                primary_doc_url = None
-
-                if primary_doc:
-                    base_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{accession_no_dashes}"
-                    primary_doc_url = f"{base_url}/{primary_doc}"
-
-                    # Construct XBRL instance URL
-                    if is_inline and primary_doc.endswith(".htm"):
-                        # Inline XBRL: append _htm.xml to the primary document name
-                        xbrl_filename = primary_doc.replace(".htm", "_htm.xml")
-                        xbrl_instance_url = f"{base_url}/{xbrl_filename}"
-                    elif primary_doc.endswith(".xml"):
-                        # Traditional XBRL instance document
-                        xbrl_instance_url = primary_doc_url
-
-                filing = XBRLFiling(
-                    accession_number=accession_no,
-                    filing_date=filing_dates[i],
-                    report_date=report_dates[i] if i < len(report_dates) else None,
-                    form_type=forms[i],
-                    file_number=file_numbers[i] if i < len(file_numbers) else None,
-                    film_number=film_numbers[i] if i < len(film_numbers) else None,
-                    primary_document=primary_doc,
-                    primary_doc_description=primary_doc_descriptions[i] if i < len(primary_doc_descriptions) else None,
-                    is_xbrl=is_xbrl,
-                    is_inline_xbrl=is_inline,
-                    xbrl_instance_url=xbrl_instance_url,
-                    primary_document_url=primary_doc_url,
-                )
-                filings.append(filing)
+            # Paginate through additional filing pages for historical filings
+            additional_files = data.get("filings", {}).get("files", [])
+            for file_ref in additional_files:
+                file_name = file_ref.get("name")
+                if not file_name:
+                    continue
+                page_url = f"{self.BASE_URL}/submissions/{file_name}"
+                try:
+                    page_response = await client.get(page_url, headers=self.headers)
+                    page_response.raise_for_status()
+                    page_data = page_response.json()
+                    filings.extend(self._extract_xbrl_filings(page_data, cik))
+                except Exception as e:
+                    logger.warning(f"Failed to fetch filing page {file_name}: {e}")
+                    continue
 
         return XBRLFilingsResponse(
             ticker=ticker.upper(),

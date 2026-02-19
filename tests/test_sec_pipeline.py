@@ -140,7 +140,7 @@ class TestXBRLParse:
             "facts",
             "concepts",
             "labels",
-            "statement_roles",
+            "role_definitions",
             "presentation_relationships",
             "calculation_relationships",
             "definition_relationships",
@@ -245,27 +245,29 @@ class TestXBRLParse:
         assert "is_numeric" in concept
         logger.info(f"Total concepts: {len(concepts)}")
 
-    async def test_statement_roles_identify_financial_statements(self, parsed_10q):
-        """Statement roles should have correct structure and recognizable statement names."""
-        roles = parsed_10q["xbrl_data"]["statement_roles"]
+    async def test_role_definitions_capture_all_roles(self, parsed_10q):
+        """Role definitions should capture all active presentation roles."""
+        roles = parsed_10q["xbrl_data"]["role_definitions"]
 
-        assert len(roles) > 0, "No statement roles found"
+        assert len(roles) > 0, "No role definitions found"
 
         # Validate required fields on each role
-        required_fields = {"role_uri", "definition", "statement_name", "display_order"}
+        required_fields = {"role_uri", "definition", "category", "description"}
         for role in roles:
             for field in required_fields:
                 assert field in role, f"Role missing required field: {field}"
 
-        # statement_name values should contain recognizable financial statement descriptions
-        statement_names = {r["statement_name"] for r in roles}
-        logger.info(f"Statement names: {statement_names}")
+        # Should have multiple categories (Statement, Disclosure, Document, etc.)
+        categories = {r["category"] for r in roles if r["category"]}
+        logger.info(f"Role categories: {categories}")
+        assert len(categories) >= 2, f"Expected at least 2 role categories, got: {categories}"
 
-        # A 10-Q should mention at least a couple of these keywords in its statement names
+        # Should include Statement-category roles with recognizable names
+        statement_descriptions = {r["description"] for r in roles if r.get("category", "").lower() == "statement"}
         keywords = ["balance sheet", "income", "cash flow", "operations", "equity", "financial position"]
-        names_lower = " ".join(statement_names).lower()
+        names_lower = " ".join(statement_descriptions).lower()
         matched = [kw for kw in keywords if kw in names_lower]
-        assert len(matched) >= 2, f"Expected at least 2 financial statement keywords in names, matched: {matched}"
+        assert len(matched) >= 2, f"Expected at least 2 financial statement keywords, matched: {matched}"
 
     async def test_presentation_relationships_form_hierarchy(self, parsed_10q):
         """Presentation relationships define the line-item hierarchy."""
@@ -369,7 +371,7 @@ class TestEndToEnd:
         logger.info(f"  Contexts: {len(xbrl_data['contexts'])}")
         logger.info(f"  Units:   {len(xbrl_data['units'])}")
         logger.info(f"  Concepts: {len(xbrl_data['concepts'])}")
-        logger.info(f"  Statement Roles: {len(xbrl_data['statement_roles'])}")
+        logger.info(f"  Role Definitions: {len(xbrl_data['role_definitions'])}")
         logger.info(f"  Presentation Rels: {len(xbrl_data['presentation_relationships'])}")
         logger.info(f"  Calculation Rels: {len(xbrl_data['calculation_relationships'])}")
         logger.info(f"  Definition Rels: {len(xbrl_data['definition_relationships'])}")

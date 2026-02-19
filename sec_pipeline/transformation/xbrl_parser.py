@@ -108,8 +108,6 @@ class XBRLParserService:
         Returns:
             Dict containing all facts, contexts, units, taxonomy metadata, and relationships
         """
-        statement_roles = self._extract_statement_roles(model_xbrl)
-
         result = {
             # Document metadata
             "document_info": self._extract_document_info(model_xbrl),
@@ -122,7 +120,7 @@ class XBRLParserService:
             # Taxonomy metadata (structure and definitions)
             "concepts": self._extract_concepts(model_xbrl),
             "labels": self._extract_labels(model_xbrl),
-            "statement_roles": statement_roles,
+            "role_definitions": self._extract_role_definitions(model_xbrl),
 
             # Relationship linkbases (how things connect)
             "presentation_relationships": self._extract_presentation_relationships(model_xbrl),
@@ -238,8 +236,8 @@ class XBRLParserService:
         facts = []
 
         for fact in model_xbrl.facts:
-            # Strip HTML from text values (e.g., business descriptions, text blocks)
-            value = fact.value
+            raw_value = fact.value
+            value = raw_value
             if isinstance(value, str):
                 value = strip_html(value)
 
@@ -248,8 +246,13 @@ class XBRLParserService:
                 "concept_name": fact.qname.localName,
                 "context_ref": fact.contextID,
                 "value": value,
-                "unit_ref": fact.unitID if hasattr(fact, 'unitID') and fact.unitID else None
+                "unit_ref": fact.unitID if hasattr(fact, 'unitID') and fact.unitID else None,
+                "is_nil": fact.isNil if hasattr(fact, 'isNil') else False,
             }
+
+            # Preserve raw HTML for text block values (tables, formatted notes)
+            if isinstance(raw_value, str) and raw_value != value:
+                fact_data["html_value"] = raw_value
 
             # Add context information (period and dimensions) directly to the fact
             # This makes it easier to understand what makes each fact unique
@@ -516,57 +519,51 @@ class XBRLParserService:
         logger.info(f"Extracted {len(labels)} labels from label linkbase")
         return labels
 
-    def _extract_statement_roles(self, model_xbrl: ModelXbrl) -> List[Dict[str, Any]]:
+    def _extract_role_definitions(self, model_xbrl: ModelXbrl) -> List[Dict[str, Any]]:
         """
-        Extract statement roles from the presentation linkbase.
+        Extract all active role definitions from the presentation linkbase.
 
-        Only includes roles whose definition category is "Statement"
-        (per the SEC EDGAR ``NNNNNN - Category - Description`` convention).
-        Roles with non-conforming or missing definitions are dropped.
+        Captures every role that has presentation relationships, with
+        the parsed definition components (category, description) when the
+        definition follows the SEC EDGAR ``NNNNNN - Category - Description``
+        convention. Classification into statement types is deferred downstream.
 
         Returns:
-            List of statement role dictionaries.
+            List of role definition dictionaries.
         """
         from sec_pipeline.config import parse_role_definition
 
         pres_rel_set = model_xbrl.relationshipSet(XbrlConst.parentChild)
         active_roles = {rel.linkrole for rel in pres_rel_set.modelRelationships}
 
-        statement_roles = []
-        display_order = 1
+        role_definitions = []
 
         for role_uri in sorted(active_roles):
             try:
                 role_types = model_xbrl.roleTypes.get(role_uri, [])
                 definition = role_types[0].definition if role_types and hasattr(role_types[0], 'definition') else None
 
-                if not definition:
-                    continue
-                parsed = parse_role_definition(definition)
-                if parsed is None:
-                    continue
-                category, description = parsed
-
-                if category.lower() != "statement":
-                    continue
-
-                if "parenthetical" in role_uri.lower():
-                    continue
-
-                statement_roles.append({
+                role_data = {
                     "role_uri": role_uri,
                     "definition": definition,
-                    "statement_name": description,
-                    "display_order": display_order,
-                })
-                display_order += 1
+                    "category": None,
+                    "description": None,
+                }
+
+                if definition:
+                    parsed = parse_role_definition(definition)
+                    if parsed is not None:
+                        role_data["category"] = parsed[0]
+                        role_data["description"] = parsed[1]
+
+                role_definitions.append(role_data)
 
             except Exception as e:
-                logger.warning(f"Error extracting statement role {role_uri}: {e}")
+                logger.warning(f"Error extracting role definition {role_uri}: {e}")
                 continue
 
-        logger.info(f"Successfully extracted {len(statement_roles)} statement roles")
-        return statement_roles
+        logger.info(f"Successfully extracted {len(role_definitions)} role definitions")
+        return role_definitions
 
     def _traverse_presentation_tree(self, rel_set, concept, depth: int = 0, visited: set = None) -> List[Dict[str, Any]]:
         """
