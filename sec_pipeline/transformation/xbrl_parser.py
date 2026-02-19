@@ -108,6 +108,14 @@ class XBRLParserService:
         Returns:
             Dict containing all facts, contexts, units, taxonomy metadata, and relationships
         """
+        statement_roles, unmapped_descriptions = self._extract_statement_roles(model_xbrl)
+
+        # Persist unmapped descriptions for LLM classification
+        if unmapped_descriptions:
+            cik, company_name = self._extract_filing_identity(model_xbrl)
+            from sec_pipeline.config import save_unmapped_descriptions
+            save_unmapped_descriptions(unmapped_descriptions, cik=cik, company_name=company_name)
+
         result = {
             # Document metadata
             "document_info": self._extract_document_info(model_xbrl),
@@ -120,18 +128,44 @@ class XBRLParserService:
             # Taxonomy metadata (structure and definitions)
             "concepts": self._extract_concepts(model_xbrl),
             "labels": self._extract_labels(model_xbrl),
-            "statement_roles": self._extract_statement_roles(model_xbrl),
+            "statement_roles": statement_roles,
 
             # Relationship linkbases (how things connect)
             "presentation_relationships": self._extract_presentation_relationships(model_xbrl),
             "calculation_relationships": self._extract_calculation_relationships(model_xbrl),
             "definition_relationships": self._extract_definition_relationships(model_xbrl),
 
+            # Descriptions needing LLM classification (not yet in seed file)
+            "unmapped_statement_descriptions": unmapped_descriptions,
+
             # Summary statistics
             "summary": self._generate_summary(model_xbrl)
         }
 
         return result
+
+    def _extract_filing_identity(self, model_xbrl: ModelXbrl) -> tuple[str | None, str | None]:
+        """Extract CIK and company name from the XBRL instance.
+
+        Returns:
+            (cik, company_name) — either may be None if not found.
+        """
+        cik = None
+        company_name = None
+
+        # CIK from entity identifier
+        if model_xbrl.contexts:
+            first_context = next(iter(model_xbrl.contexts.values()))
+            if hasattr(first_context, 'entityIdentifier'):
+                cik = first_context.entityIdentifier[1]
+
+        # Company name from dei:EntityRegistrantName fact
+        for fact in model_xbrl.facts:
+            if fact.qname.localName == "EntityRegistrantName":
+                company_name = fact.value
+                break
+
+        return cik, company_name
 
     def _extract_document_info(self, model_xbrl: ModelXbrl) -> Dict[str, Any]:
         """Extract document-level metadata."""
@@ -514,7 +548,7 @@ class XBRLParserService:
         logger.info(f"Extracted {len(labels)} labels from label linkbase")
         return labels
 
-    def _extract_statement_roles(self, model_xbrl: ModelXbrl) -> List[Dict[str, Any]]:
+    def _extract_statement_roles(self, model_xbrl: ModelXbrl) -> tuple[List[Dict[str, Any]], List[str]]:
         """
         Extract statement roles from the presentation linkbase.
 
@@ -523,7 +557,9 @@ class XBRLParserService:
         Roles with non-conforming or missing definitions are dropped.
 
         Returns:
-            List of statement role dictionaries
+            Tuple of (statement_roles, unmapped_descriptions) where
+            unmapped_descriptions contains description strings not found
+            in the seed file (need LLM classification).
         """
         from sec_pipeline.config import load_statement_type_mappings, parse_role_definition
         mappings = load_statement_type_mappings()
@@ -539,6 +575,7 @@ class XBRLParserService:
         logger.info(f"Found {len(active_roles)} active presentation roles")
 
         statement_roles = []
+        unmapped_descriptions = []
         display_order = 1
 
         for role_uri in sorted(active_roles):
@@ -571,6 +608,9 @@ class XBRLParserService:
                 # Look up statement type from seed mappings by description
                 statement_type = mappings.get(description, "Unclassified")
 
+                if statement_type == "Unclassified":
+                    unmapped_descriptions.append(description)
+
                 statement_data = {
                     "role_uri": role_uri,
                     "definition": definition,
@@ -586,8 +626,8 @@ class XBRLParserService:
                 logger.warning(f"Error extracting statement role {role_uri}: {e}")
                 continue
 
-        logger.info(f"Successfully extracted {len(statement_roles)} statement roles")
-        return statement_roles
+        logger.info(f"Successfully extracted {len(statement_roles)} statement roles ({len(unmapped_descriptions)} unmapped)")
+        return statement_roles, unmapped_descriptions
 
     def _traverse_presentation_tree(self, rel_set, concept, depth: int = 0, visited: set = None) -> List[Dict[str, Any]]:
         """
