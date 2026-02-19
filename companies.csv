@@ -1,0 +1,348 @@
+TICKER,CIK,COMPANY_NAME
+LSCC,855658,Lattice Semiconductor
+FN,1408710,Fabrinet
+SMRT,1837014,SmartRent
+MA,1141391,Mastercard
+WOLF,895419,Wolfspeed
+PAYC,1590955,Paycom
+PINS,1506293,Pinterest
+MKTX,1278021,MarketAxess
+VEEV,1393052,Veeva Systems
+DLO,1846832,dLocal
+GFS,1709048,GlobalFoundries
+NOW,1373715,ServiceNow
+LYFT,1759509,Lyft
+GLBE,1835963,Global-e Online
+GE,40545,GE Aerospace
+ARM,1973239,ARM Holdings
+CACI,16058,CACI International
+V,1403161,Visa
+IAS,1842718,Integral Ad Science
+EQPT,1693736,EquipmentShare
+AVAV,1368622,AeroVironment
+BIGC,1739940,BigCommerce
+AI,1577526,C3.ai
+COHR,820318,Coherent Corp
+OPEN,1801169,Opendoor Technologies
+PD,1568100,PagerDuty
+INTU,896878,Intuit
+GEV,1996810,GE Vernova
+ASAN,1477720,Asana
+OWL,1823945,Blue Owl Capital
+MDB,1441816,MongoDB
+PLTR,1321655,Palantir
+PYPL,1633917,PayPal
+GLXY,1859392,Galaxy Digital
+SEZL,1662991,Sezzle
+BSY,1031308,Bentley Systems
+EVCM,1853145,EverCommerce
+BEP,1533232,Brookfield Renewable Partners
+NABL,1834488,N-able
+ZI,1794515,ZoomInfo
+PHR,1412408,Phreesia
+CSGP,1057352,CoStar Group
+DAVE,1841408,Dave
+APPF,1433195,AppFolio
+HEI,46619,HEICO
+HWM,4281,Howmet Aerospace
+MBLY,1910139,Mobileye
+NTNX,1618732,Nutanix
+PLXS,785786,Plexus
+RNG,1384905,RingCentral
+ZETA,1851003,Zeta Global
+RKLB,1819994,Rocket Lab USA
+SNOW,1640147,Snowflake
+ETSY,1370637,Etsy
+HNGE,1673743,Hinge Health
+LMT,936468,Lockheed Martin
+HOOD,1783879,Robinhood
+UBER,1543151,Uber
+SPT,1517375,Sprout Social
+SE,1703399,Sea Limited
+NXPI,1413447,NXP Semiconductors
+ET,1276187,Energy Transfer
+FRGE,1827821,Forge Global
+DBX,1467623,Dropbox
+ASX,1449003,ASX Limited
+TTAN,1638826,ServiceTitan
+APPN,1441683,Appian
+LSEG.L,1842726,LSEG
+KTOS,1069258,Kratos Defense
+RXRX,1601830,Recursion Pharmaceuticals
+GLW,24741,Corning
+SEMR,1831840,SEMRush
+MMS,1032220,Maximus
+NU,1691493,Nubank (Nu Holdings)
+REVOLUT,-1,Revolut
+WEAV,1609151,Weave
+AVGO,1730168,Broadcom
+CLS,1030894,Celestica
+RBLX,1315098,Roblox
+STNE,1745431,StoneCo
+ENOV,1420800,Enovis
+FRSH,1544522,Freshworks
+GDRX,1809519,GoodRx
+LRCX,707549,Lam Research
+MRCY,1049521,Mercury Systems
+PYCR,1839439,Paycor HCM
+BOX,1372612,Box
+CRNC,1768267,Cerence
+SAP,1000184,SAP
+AMZN,1018724,Amazon
+ACHR,1824502,Archer Aviation
+ADYEY,1788707,Adyen
+ROKU,1428439,Roku
+SPGI,64040,S&P Global
+TER,97210,Teradyne
+VERX,1806837,Vertex
+FSLR,1274494,First Solar
+CRCL,1876042,Circle
+KLAC,319201,KLA Corporation
+ALAB,1736297,Astera Labs
+SLAB,1038074,Silicon Laboratories
+ETOR,1493318,eToro
+CCJ,1009001,Cameco
+AZPN,1897982,Aspen Technology
+BLND,1855747,Blend Labs
+EBAY,1065088,eBay
+PATH,1734722,UiPath
+ETN,1551182,Eaton Corporation
+FSLY,1517413,Fastly
+BLSH,1872195,Bullish
+AFRM,1820953,Affirm
+PDD,1737806,PDD Holdings
+QCOM,804328,Qualcomm
+ROOT,1788882,Root Insurance
+CBOE,1374310,Cboe Global
+ASTS,1780312,AST SpaceMobile
+APLD,1144879,Applied Digital
+BITF,1812477,Bitfarms
+BLKB,1280058,Blackbaud
+SYM,1837240,Symbotic
+TMDX,1756262,TransMedics
+ZS,1713683,Zscaler
+XEL,72903,Xcel Energy
+CFLT,1699838,Confluent
+LHX,202058,L3Harris Technologies
+AXON,1069183,Axon Enterprise
+ORCL,1341439,Oracle
+TTD,1671933,The Trade Desk
+WEX,1309108,WEX Inc
+DDOG,1561550,Datadog
+GTLB,1653482,GitLab
+BABA,1577552,Alibaba
+QLYS,1107843,Qualys
+META,1326801,Meta
+TSLA,1318605,Tesla
+ADBE,796343,Adobe
+INTC,50863,Intel
+JAMF,1721947,Jamf Holding
+TASK,1829864,TaskUs
+TSM,1046179,Taiwan Semiconductor
+DT,1773383,Dynatrace
+NVDA,1045810,Nvidia
+TEAM,1650372,Atlassian
+SPSC,1092699,SPS Commerce
+TDOC,1477449,Teladoc Health
+BAH,1443646,Booz Allen Hamilton
+WFRD,1603923,Weatherford
+LFST,1845257,LifeStance Health
+METAMASK,-1,MetaMask
+CRWV,1769628,CoreWeave
+COUR,1651562,Coursera
+NFLX,1065280,Netflix
+TLN,1622536,Talen Energy
+TXN,97476,Texas Instruments
+LIFE,1788451,Ethos Technologies
+LITE,1633978,Lumentum
+ISRG,1035267,Intuitive Surgical
+PUBM,1422930,PubMatic
+QTWO,1410384,Q2 Holdings
+RTX,101829,RTX Corporation
+DV,1819928,DoubleVerify
+DUOL,1562088,Duolingo
+MSCI,1408198,MSCI
+ADI,6281,Analog Devices
+IREN,1878848,Iris Energy
+RBRK,1943896,Rubrik
+TYL,860731,Tyler Technologies
+WK,1445305,Workiva
+FTNT,1262039,Fortinet
+LC,1409970,LendingClub
+ASML,937966,ASML Holding
+LMND,1691421,Lemonade
+PSFE,1833835,Paysafe
+CIFR,1819989,Cipher Mining
+LEU,1065059,Centrus Energy
+NET,1477333,Cloudflare
+TOST,1650164,Toast
+TEM,1717115,Tempus AI
+OTCM,1767287,OTC Markets
+APP,1751008,AppLovin
+VTEX,1793663,VTEX
+HIVE,1720424,HIVE Digital Technologies
+AVPT,1777921,AvePoint
+SMAR,1366561,Smartsheet
+HUBS,1404655,HubSpot
+DOCU,1261333,DocuSign
+PAY,1841156,Paymentus
+SAIL,2030781,SailPoint
+CHYM,1795586,Chime
+RIOT,1167419,Riot Platforms
+CME,1156375,CME Group
+MARA,1507605,MARA Holdings
+IONQ,1824920,IonQ
+FIGR,2064124,Figure Tech
+BL,1666134,BlackLine
+NVT,1720635,nVent Electric
+HIMS,1773751,Hims & Hers Health
+DELL,1571996,Dell Technologies
+D,715957,Dominion Energy
+WULF,1083301,TeraWulf
+VRT,1674101,Vertiv Holdings
+SPOT,1639920,Spotify
+CRDO,1807794,Credo Technology
+LUNR,1844452,Intuitive Machines
+AMD,2488,AMD
+BWXT,1486957,BWX Technologies
+WIX,1576789,Wix
+OSCR,1568651,Oscar Health
+COIN,1679788,Coinbase
+CLSK,827876,CleanSpark
+LSPD,1823306,Lightspeed Commerce
+MELI,1099590,MercadoLibre
+CDNS,813672,Cadence Design
+DLR,1297996,Digital Realty
+FIVN,1288847,Five9
+FLYW,1580560,Flywire
+OUST,1816581,Ouster
+PTC,857005,PTC
+BE,1664703,Bloom Energy
+CRWD,1535527,CrowdStrike
+OKTA,1660134,Okta
+TENB,1660280,Tenable
+RKT,1805284,Rocket Companies
+S,1583708,SentinelOne
+CRM,1108524,Salesforce
+NDAQ,1120193,Nasdaq Inc
+FROG,1800667,JFrog
+WAY,1990354,Waystar
+DOCS,1516513,Doximity
+EQIX,1101239,Equinix
+RPD,1560327,Rapid7
+AKAM,1086222,Akamai Technologies
+BKNG,1075531,Booking Holdings
+DOCN,1582961,DigitalOcean
+EXFY,1476840,Expensify
+PCTY,1591698,Paylocity
+SMCI,1375365,Super Micro Computer
+MSFT,789019,Microsoft
+OKLO,1849056,Oklo
+MQ,1522540,Marqeta
+PRGS,876167,Progress Software
+LDOS,1336920,Leidos
+NRG,1013871,NRG Energy
+MSTR,1050446,MicroStrategy
+NOC,1133421,Northrop Grumman
+JOBY,1819848,Joby Aviation
+TNET,937098,TriNet Group
+WISE,1876631,Wise
+RDW,1819810,Redwire
+FOUR,1794669,Shift4 Payments
+BBAI,1836981,BigBear.ai
+KLAR,2003292,Klarna
+BRZE,1676238,Braze
+TDG,1260221,TransDigm Group
+SSNC,1402436,SS&C Technologies
+SHOP,1594805,Shopify
+SNAP,1564408,Snap
+CART,1579091,Instacart (Maplebear)
+MGNI,1595974,Magnite
+PANW,1327567,Palo Alto Networks
+CYBR,1598110,CyberArk
+GWRE,1528396,Guidewire Software
+IOT,1642896,Samsara
+DCBO,1829959,Docebo
+ESTC,1707753,Elastic
+DASH,1792789,DoorDash
+TWLO,1447669,Twilio
+MU,723125,Micron Technology
+RCAT,748268,Red Cat Holdings
+CORZ,1839341,Core Scientific
+GENI,1834489,Genius Sports
+GLOB,1557860,Globant
+FCH,-1,Funding Circle
+DKNG,1883685,DraftKings
+RELY,1782170,Remitly Global
+SCHW,316709,Schwab
+GD,40533,General Dynamics
+INTA,1565687,Intapp
+SERV,1832483,Serve Robotics
+DOMO,1505952,Domo
+UPST,1647639,Upstart
+NCNO,1902733,nCino
+RDDT,1713445,Reddit
+AMAT,6951,Applied Materials
+GRAB,1855612,Grab Holdings
+SOUN,1840856,SoundHound AI
+SOFI,1818874,SoFi
+VRNS,1361113,Varonis Systems
+VST,1692819,Vistra
+Z,1617640,Zillow Group
+MTCH,891103,Match Group
+CHKP,1015922,Check Point Software
+GEMI,2055592,Gemini Space Station Inc.
+TRMB,864749,Trimble
+RAMP,733269,LiveRamp
+ALKT,1529274,Alkami Technology
+XYZ,1512673,Block
+HPE,1645590,Hewlett Packard Enterprise
+SNPS,883241,Synopsys
+YEXT,1614178,Yext
+PHANTOM,-1,Phantom
+AMPL,1866692,Amplitude
+OTEX,1002638,Open Text
+PWR,1050915,Quanta Services
+LAW,1625641,CS Disco
+CPNG,1834584,Coupang
+ENPH,1463101,Enphase Energy
+MRVL,1835632,Marvell Technology
+PCOR,1611052,Procore Technologies
+CEG,1868275,Constellation Energy
+CWAN,1866368,Clearwater Analytics
+TW,1758730,Tradeweb
+FLUT,1635327,Flutter Entertainment
+MNDY,1845338,Monday.com
+GPN,1123360,Global Payments
+IBKR,1381197,Interactive Brokers
+ZM,1585521,Zoom Video
+ICE,1571949,Intercontinental Exchange
+AAPL,320193,Apple
+BILL,1786352,Bill.com
+RGTI,1838359,Rigetti Computing
+CXM,1569345,Sprinklr
+CIEN,936395,Ciena
+ENX,1774805,Euronext
+MPWR,1280452,Monolithic Power
+IBM,51143,IBM
+OS,1889956,OneStream
+CVNA,1690820,Carvana
+MANH,1056696,Manhattan Associates
+NBIS,1513845,Nebius Group
+ABNB,1559720,Airbnb
+ANET,1596532,Arista Networks
+CSCO,858877,Cisco Systems
+FVRR,1762301,Fiverr International
+KVYO,1835830,Klaviyo
+U,1810806,Unity Software
+WDAY,1327811,Workday
+FIGM,1579878,Figma
+ON,1097864,ON Semiconductor
+HUT,1964789,Hut 8 Mining
+GOOGL,1652044,Alphabet
+ANSS,1013462,Ansys
+PGY,1883085,Pagaya Technologies
+CLBT,1854587,Cellebrite
+DAY,1725057,Dayforce
+FISV,798354,Fiserv
+SMR,1822966,NuScale Power
