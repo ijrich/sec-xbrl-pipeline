@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
     "arelle-release",
+    "tenacity>=8.2",
 ]
 
 [tool.hatch.build.targets.wheel]

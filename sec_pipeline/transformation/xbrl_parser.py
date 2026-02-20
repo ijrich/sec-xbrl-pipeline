@@ -565,54 +565,6 @@ class XBRLParserService:
         logger.info(f"Successfully extracted {len(role_definitions)} role definitions")
         return role_definitions
 
-    def _traverse_presentation_tree(self, rel_set, concept, depth: int = 0, visited: set = None) -> List[Dict[str, Any]]:
-        """
-        Recursively traverse presentation tree and track depth.
-
-        Args:
-            rel_set: ModelRelationshipSet for parent-child relationships
-            concept: Current concept being processed
-            depth: Current depth level (0 = root)
-            visited: Set of visited concepts (for cycle detection)
-
-        Returns:
-            List of presentation relationship dictionaries
-        """
-        if visited is None:
-            visited = set()
-
-        # Avoid cycles
-        concept_key = str(concept.qname)
-        if concept_key in visited:
-            return []
-
-        visited.add(concept_key)
-        results = []
-
-        # Get children of this concept
-        child_rels = rel_set.fromModelObject(concept)
-
-        for rel in child_rels:
-            child = rel.toModelObject
-
-            # Record this relationship
-            results.append({
-                "parent_concept": str(concept.qname),
-                "child_concept": str(child.qname),
-                "depth": depth + 1,  # Child is one level deeper
-                "order": float(rel.order) if rel.order else None,
-                "preferred_label_role": rel.preferredLabel,
-                "role_uri": rel.linkrole,
-                "priority": rel.priority if hasattr(rel, 'priority') else None,
-            })
-
-            # Recursively process children
-            results.extend(
-                self._traverse_presentation_tree(rel_set, child, depth + 1, visited.copy())
-            )
-
-        return results
-
     def _extract_presentation_relationships(self, model_xbrl: ModelXbrl) -> List[Dict[str, Any]]:
         """
         Extract presentation relationships (hierarchy) from the presentation linkbase.
@@ -620,27 +572,32 @@ class XBRLParserService:
         These define the visual structure and ordering of line items in financial statements
         (e.g., Assets contains Current Assets, which contains Cash, etc.).
 
-        Returns:
-            List of presentation relationship dictionaries with parent-child structure
-        """
-        # Get presentation relationship set
-        pres_rel_set = model_xbrl.relationshipSet(XbrlConst.parentChild)
+        Iterates the flat modelRelationships directly to avoid exponential
+        blowup from recursive tree traversal. Depth can be computed downstream
+        via recursive CTE on parent_concept/child_concept/role_uri.
 
-        logger.info(f"Extracting presentation relationships from {len(pres_rel_set.modelRelationships)} relationships")
+        Returns:
+            List of presentation relationship dictionaries with parent-child edges
+        """
+        pres_rel_set = model_xbrl.relationshipSet(XbrlConst.parentChild)
+        all_rels = pres_rel_set.modelRelationships
+
+        logger.info(f"Extracting presentation relationships from {len(all_rels)} relationships")
 
         relationships = []
 
-        # Process all root concepts (concepts with no parents)
-        root_concepts = pres_rel_set.rootConcepts if hasattr(pres_rel_set, 'rootConcepts') else []
-
-        for root_concept in root_concepts:
+        for rel in all_rels:
             try:
-                # Start traversal from each root with depth 0
-                relationships.extend(
-                    self._traverse_presentation_tree(pres_rel_set, root_concept, depth=0)
-                )
+                relationships.append({
+                    "parent_concept": str(rel.fromModelObject.qname),
+                    "child_concept": str(rel.toModelObject.qname),
+                    "order": float(rel.order) if rel.order else None,
+                    "preferred_label_role": rel.preferredLabel,
+                    "role_uri": rel.linkrole,
+                    "priority": rel.priority if hasattr(rel, 'priority') else None,
+                })
             except Exception as e:
-                logger.warning(f"Error traversing presentation tree from root {root_concept.qname}: {e}")
+                logger.warning(f"Error extracting presentation relationship: {e}")
                 continue
 
         logger.info(f"Successfully extracted {len(relationships)} presentation relationships")

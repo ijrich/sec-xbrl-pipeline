@@ -1,6 +1,15 @@
+import asyncio
 import httpx
 import logging
 from typing import Optional
+
+from tenacity import (
+    retry,
+    wait_exponential,
+    retry_if_exception_type,
+    stop_after_attempt,
+)
+
 from sec_pipeline.ingestion.schemas import XBRLFiling, XBRLFilingsResponse
 
 logger = logging.getLogger(__name__)
@@ -11,6 +20,9 @@ class SECAPIClient:
 
     BASE_URL = "https://data.sec.gov"
     COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
+
+    _request_semaphore = asyncio.Semaphore(8)
+    _min_interval = 0.125  # 8 req/s max
 
     def __init__(
         self,
@@ -31,6 +43,19 @@ class SECAPIClient:
         }
         logger.info(f"Initialized SEC API client with User-Agent: {user_agent}")
 
+    @retry(
+        wait=wait_exponential(multiplier=30, max=300),
+        stop=stop_after_attempt(5),
+        retry=retry_if_exception_type(httpx.HTTPStatusError),
+    )
+    async def _throttled_get(self, client: httpx.AsyncClient, url: str) -> httpx.Response:
+        """Rate-limited GET with retry/backoff for 429/403 responses."""
+        async with self._request_semaphore:
+            await asyncio.sleep(self._min_interval)
+            response = await client.get(url, headers=self.headers)
+            response.raise_for_status()
+            return response
+
     async def get_company_cik(self, ticker: str) -> Optional[dict]:
         """
         Get company CIK and name from ticker symbol.
@@ -45,8 +70,7 @@ class SECAPIClient:
 
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.get(url, headers=self.headers)
-                response.raise_for_status()
+                response = await self._throttled_get(client, url)
                 return response.json()
             except httpx.HTTPStatusError:
                 # Try ticker lookup file
@@ -67,10 +91,7 @@ class SECAPIClient:
         async with httpx.AsyncClient() as client:
             try:
                 logger.info(f"Fetching SEC company tickers from: {url}")
-                logger.info(f"Using headers: {self.headers}")
-                response = await client.get(url, headers=self.headers)
-                logger.info(f"Response status: {response.status_code}")
-                response.raise_for_status()
+                response = await self._throttled_get(client, url)
                 data = response.json()
                 logger.info(f"Successfully fetched {len(data)} companies from SEC")
 
@@ -187,8 +208,7 @@ class SECAPIClient:
         url = f"{self.BASE_URL}/submissions/CIK{cik}.json"
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=self.headers)
-            response.raise_for_status()
+            response = await self._throttled_get(client, url)
             data = response.json()
 
             # Extract company metadata
@@ -214,8 +234,7 @@ class SECAPIClient:
                     continue
                 page_url = f"{self.BASE_URL}/submissions/{file_name}"
                 try:
-                    page_response = await client.get(page_url, headers=self.headers)
-                    page_response.raise_for_status()
+                    page_response = await self._throttled_get(client, page_url)
                     page_data = page_response.json()
                     filings.extend(self._extract_xbrl_filings(page_data, cik))
                 except Exception as e:
@@ -254,8 +273,7 @@ class SECAPIClient:
         url = f"{self.BASE_URL}/submissions/CIK{cik}.json"
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=self.headers)
-            response.raise_for_status()
+            response = await self._throttled_get(client, url)
             data = response.json()
 
             company_name = data["name"]
@@ -283,8 +301,7 @@ class SECAPIClient:
                     continue
                 page_url = f"{self.BASE_URL}/submissions/{file_name}"
                 try:
-                    page_response = await client.get(page_url, headers=self.headers)
-                    page_response.raise_for_status()
+                    page_response = await self._throttled_get(client, page_url)
                     page_data = page_response.json()
                     filings.extend(self._extract_xbrl_filings(page_data, cik))
                 except Exception as e:
